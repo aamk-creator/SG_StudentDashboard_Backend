@@ -7,7 +7,7 @@ Route::get('/', function () {
 });
 
 Route::get('/about',function(){
-    return "about page";
+    return "about page" ;
 });
 
 
