@@ -7,6 +7,7 @@ use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Http\Resources\StudentResource;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StudentController extends Controller
 {
@@ -16,7 +17,6 @@ class StudentController extends Controller
     public function index()
     {
         $students = Student::with(['course', 'branch', 'user'])->get();
-
         return response()->json([
             'status' => true,
             'data' => StudentResource::collection($students),
