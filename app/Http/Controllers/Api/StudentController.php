@@ -7,7 +7,6 @@ use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Http\Resources\StudentResource;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StudentController extends Controller
 {
@@ -17,6 +16,7 @@ class StudentController extends Controller
     public function index()
     {
         $students = Student::with(['course', 'branch', 'user'])->get();
+
         return response()->json([
             'status' => true,
             'data' => StudentResource::collection($students),
@@ -51,6 +51,7 @@ class StudentController extends Controller
         ]);
 
         $validated['status'] = $validated['status'] ?? 'active';
+        $validated['course_start_at'] = now(); // 🔥 start tracking here
 
         $student = Student::create($validated);
         $student->load(['course', 'branch', 'user']);
@@ -91,6 +92,82 @@ class StudentController extends Controller
             'data' => new StudentResource($student),
         ], 200);
     }
+
+    /**
+     * Mark course as completed (ADMIN)
+     */
+    public function completeCourse($id)
+    {
+        $student = Student::findOrFail($id);
+
+        if ($student->course_end_at) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Course already completed',
+            ], 400);
+        }
+
+        $student->course_end_at = now();
+        $student->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Course marked as completed',
+            'completed_at' => $student->course_end_at,
+        ]);
+    }
+
+    /**
+     * Issue certificate (ADMIN)
+     */
+    // public function issueCertificate(Request $request)
+    // {
+    //     $request->validate([
+    //         'student_id' => 'required|exists:students,id',
+    //     ]);
+
+    //     $student = Student::with('course')->findOrFail($request->student_id);
+
+    //     if (!$student->course_end_at) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Student has not completed the course',
+    //         ], 400);
+    //     }
+
+    //     if ($student->certificate_issued_at) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Certificate already issued',
+    //         ], 400);
+    //     }
+
+    //     $student->certificate_issued_at = now();
+    //     $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificates.template', [
+    //         'student' => $student,
+    //         'course' => $student->course,
+    //         'issued_at' => $student->certificate_issued_at,
+    //     ]);
+
+    //     $fileName = 'student_' . $student->id . '.pdf';
+    //     $pdfPath = storage_path('app/public/certificates/' . $fileName);
+
+    //     if (!file_exists(storage_path('app/public/certificates'))) {
+    //         mkdir(storage_path('app/public/certificates'), 0777, true);
+    //     }
+    //     $pdf->save($pdfPath);
+
+    //     $student->certificate_path = 'certificates/' . $fileName;
+    //     $student->save();
+
+       
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Certificate issued successfully',
+    //         'issued_at' => $student->certificate_issued_at,
+    //         'certificate_path' => asset('storage/' . $student->certificate_path),
+    //     ]);
+    // }
 
     /**
      * Delete student
