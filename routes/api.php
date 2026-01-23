@@ -17,31 +17,49 @@ use App\Http\Controllers\Api\AuthController;
 | which is assigned the "api" middleware group. 
 |
 */
-
+ 
 // -------------------- AUTH --------------------
 
 
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 
+
 // Route::post('/register', [AuthController::class, 'createUser'])->name('register');
 
+//  Route::get('/students', [StudentController::class, 'index'])->name('students.index');
+Route::middleware('auth:sanctum')->group(function () {
+
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 
+  Route::prefix('students')->group(function () {
+    Route::get('/', [StudentController::class, 'index'])->name('students.index');
+    Route::get('/export', [StudentController::class, 'export'])->name('students.export'); // move here
+    Route::get('/{id}', [StudentController::class, 'show'])->name('students.show');
+    Route::post('/', [StudentController::class, 'store'])->name('students.store');
+    Route::put('/{id}', [StudentController::class, 'update'])->name('students.update');
+    Route::delete('/{id}', [StudentController::class, 'destroy'])->name('students.destroy');
+});
 
-Route::middleware('auth:sanctum')->prefix()->group(function () {
-Route::get('/students', [StudentController::class, 'index'])->name('students.index');
 
-    
-    Route::prefix('students')->group(function () {
-        Route::get('/{id}', [StudentController::class, 'show'])->name('students.show');
-        Route::post('/', [StudentController::class, 'store'])->name('students.store');
-        Route::put('/{id}', [StudentController::class, 'update'])->name('students.update');
-        Route::delete('/{id}', [StudentController::class, 'destroy'])->name('students.destroy');
+      Route::prefix('branches')->group(function () {
+        Route::get('/', [BranchController::class, 'index'])->name('branches.index');
+        Route::get('/{id}', [BranchController::class, 'show'])->name('branches.show');
+        Route::post('/', [BranchController::class, 'store'])->name('branches.store');
+        Route::put('/{id}', [BranchController::class, 'update'])->name('branches.update');
+        Route::delete('/{id}', [BranchController::class, 'destroy'])->name('branches.destroy');
     });
 
+    Route::prefix('courses')->group(function()
+    {
+        Route::get('/',[CourseController::class,'index'])->name('courses.index');
+        Route::get('/{id}',[CourseController::class,'show'])->name('courses.show');
+        Route::post('/', [CourseController::class, 'store'])->name('courses.store');
+        Route::put('/{id}', [CourseController::class, 'update'])->name('courses.update');
+        Route::delete('/{id}', [CourseController::class, 'destroy'])->name('courses.destroy');
+
+        Route::get('{id}/students', [CourseController::class, 'students']);
+    
  });
 
-
-
-
-    
+});

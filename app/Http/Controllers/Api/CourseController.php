@@ -13,7 +13,7 @@ class CourseController extends Controller
     // GET /api/courses
     public function index()
     {
-        $courses = Course::with(['branch', 'user', 'students'])->get();
+        $courses = Course::with(['branch', 'students'])->get();
 
         return response()->json([
             'status' => true,
@@ -24,7 +24,7 @@ class CourseController extends Controller
     // GET /api/courses/{id}
     public function show($id)
     {
-        $course = Course::with(['branch', 'user', 'students'])->find($id);
+        $course = Course::with(['branch', 'students'])->find($id);
 
         if (!$course) {
             return response()->json([
@@ -42,7 +42,6 @@ class CourseController extends Controller
     // POST /api/courses
     public function store(Request $request)
     {
-        // Validate incoming fields
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'title' => 'nullable|string|max:255',
@@ -50,10 +49,8 @@ class CourseController extends Controller
             'branch_id' => 'nullable|exists:branches,id',
         ]);
 
-        // Auto-set user_id (currently authenticated admin)
-        $validated['user_id'] = Auth::id() ?? 1; // fallback to admin ID 1 if Auth not configured
+        $validated['user_id'] = Auth::id() ?? 1;
 
-        // If branch_id is not provided, use first branch as default
         if (empty($validated['branch_id'])) {
             $defaultBranch = Branch::first();
             if ($defaultBranch) {
@@ -78,7 +75,6 @@ class CourseController extends Controller
     public function update(Request $request, $id)
     {
         $course = Course::find($id);
-
         if (!$course) {
             return response()->json([
                 'status' => false,
@@ -105,7 +101,6 @@ class CourseController extends Controller
     public function destroy($id)
     {
         $course = Course::find($id);
-
         if (!$course) {
             return response()->json([
                 'status' => false,
@@ -118,6 +113,24 @@ class CourseController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Course deleted successfully'
+        ], 200);
+    }
+
+    // GET /api/courses/{id}/students
+    public function students($id)
+    {
+        $course = Course::with('students')->find($id);
+
+        if (!$course) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Course not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $course->students
         ], 200);
     }
 }

@@ -21,3 +21,7 @@ Route::get('/user/{name?}/{age?}',function($name="Aung",$age='22')
     return "name is" . $name.  "age is" .$age;
 
 });
+
+Route::get('/about',function(){
+    return "about page" ;
+});

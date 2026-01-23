@@ -40,15 +40,15 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        //  dd($request);       
-        // $validated = $request->validate([
-        //     'email'    => 'required|email',
-        //     'password' => 'required|string',
-        // ]);
+         
+        $validated = $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required|string',
+        ]);
 
 
-        $user = User::where('email', $request['email'])->first();
-        if (! $user || ! Hash::check($request['password'], $user->password)) {
+        $user = User::where('email', $validated['email'])->first();
+        if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return response()->json([
                 'status'  => false,
                 'message' => 'Invalid email or password',
@@ -71,15 +71,26 @@ class AuthController extends Controller
     /**
      * Logout
      */
-    public function logout(Request $request)
-    {
-        $request->user()->tokens()->delete();
+   public function logout(Request $request)
+{
+    $user = $request->user(); // authenticated user
+
+    if ($user) {
+        // delete all tokens (logs out from all devices)
+        $user->tokens()->delete();
 
         return response()->json([
             'status'  => true,
             'message' => 'Logged out successfully',
         ]);
     }
+
+    return response()->json([
+        'status'  => false,
+        'message' => 'No authenticated user found',
+    ], 401);
+}
+
 }
 
 
