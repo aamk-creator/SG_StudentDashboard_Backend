@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Branch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class CourseController extends Controller
 {
@@ -14,6 +15,17 @@ class CourseController extends Controller
     public function index()
     {
         $courses = Course::with(['branch', 'students'])->get();
+
+        // Format course dates for UI
+        $courses = $courses->map(function ($course) {
+            $course->course_start_at = $course->course_start_at
+                ? Carbon::parse($course->course_start_at)->format('Y-m-d')
+                : null;
+            $course->course_end_at = $course->course_end_at
+                ? Carbon::parse($course->course_end_at)->format('Y-m-d')
+                : null;
+            return $course;
+        });
 
         return response()->json([
             'status' => true,
@@ -33,6 +45,14 @@ class CourseController extends Controller
             ], 404);
         }
 
+        // Format course dates
+        $course->course_start_at = $course->course_start_at
+            ? Carbon::parse($course->course_start_at)->format('Y-m-d')
+            : null;
+        $course->course_end_at = $course->course_end_at
+            ? Carbon::parse($course->course_end_at)->format('Y-m-d')
+            : null;
+
         return response()->json([
             'status' => true,
             'data' => $course
@@ -47,6 +67,8 @@ class CourseController extends Controller
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'branch_id' => 'nullable|exists:branches,id',
+            'course_start_at' => 'nullable|date',
+            'course_end_at' => 'nullable|date',
         ]);
 
         $validated['user_id'] = Auth::id() ?? 1;
@@ -64,6 +86,14 @@ class CourseController extends Controller
         }
 
         $course = Course::create($validated);
+
+        // Format dates for UI
+        $course->course_start_at = $course->course_start_at
+            ? Carbon::parse($course->course_start_at)->format('Y-m-d')
+            : null;
+        $course->course_end_at = $course->course_end_at
+            ? Carbon::parse($course->course_end_at)->format('Y-m-d')
+            : null;
 
         return response()->json([
             'status' => true,
@@ -87,9 +117,19 @@ class CourseController extends Controller
             'title' => 'sometimes|nullable|string|max:255',
             'description' => 'sometimes|nullable|string',
             'branch_id' => 'sometimes|nullable|exists:branches,id',
+            'course_start_at' => 'sometimes|nullable|date',
+            'course_end_at' => 'sometimes|nullable|date',
         ]);
 
         $course->update($validated);
+
+        // Format dates
+        $course->course_start_at = $course->course_start_at
+            ? Carbon::parse($course->course_start_at)->format('Y-m-d')
+            : null;
+        $course->course_end_at = $course->course_end_at
+            ? Carbon::parse($course->course_end_at)->format('Y-m-d')
+            : null;
 
         return response()->json([
             'status' => true,
@@ -119,7 +159,7 @@ class CourseController extends Controller
     // GET /api/courses/{id}/students
     public function students($id)
     {
-        $course = Course::with('students')->find($id);
+        $course = Course::with('students.user')->find($id);
 
         if (!$course) {
             return response()->json([
@@ -128,9 +168,23 @@ class CourseController extends Controller
             ], 404);
         }
 
+        $students = $course->students->map(function ($student) {
+            return [
+                'id' => $student->id,
+                'name' => $student->name,
+                'email' => $student->user->email ?? null,
+                'course_start_at' => $student->course_start_at
+                    ? Carbon::parse($student->course_start_at)->format('Y-m-d')
+                    : null,
+                'course_end_at' => $student->course_end_at
+                    ? Carbon::parse($student->course_end_at)->format('Y-m-d')
+                    : null,
+            ];
+        });
+
         return response()->json([
             'status' => true,
-            'data' => $course->students
+            'data' => $students
         ], 200);
     }
 }
