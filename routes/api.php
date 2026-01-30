@@ -1,12 +1,13 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AuthController;
-
+use App\Http\Controllers\Api\StudentLoginController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,15 +16,31 @@ use App\Http\Controllers\Api\AuthController;
 */
 
 // -------------------- PUBLIC ROUTES --------------------
+
+// Admin login
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 
+// Student login (returns full student info)
+Route::post('/student/login', [StudentLoginController::class, 'login']);
 
 // -------------------- PROTECTED ROUTES --------------------
 Route::middleware('auth:sanctum')->group(function () {
 
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
- 
+
+    // -------------------- STUDENT PORTAL ROUTES --------------------
+
+    // Get current authenticated student with course info
+    Route::get('/student/me', function (Request $request) {
+        $student = $request->user()->load('course'); // eager load course relationship
+        return response()->json(['data' => $student]);
+    });
+
+    // Download certificate
+    Route::get('/student/certificate/download', [StudentController::class, 'downloadCertificate']);
+
+    // -------------------- ADMIN ROUTES --------------------
 
     // Students
     Route::prefix('students')->group(function () {
@@ -52,12 +69,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [CourseController::class, 'store'])->name('courses.store');
         Route::put('/{id}', [CourseController::class, 'update'])->name('courses.update');
         Route::delete('/{id}', [CourseController::class, 'destroy'])->name('courses.destroy');
-        Route::get('{id}/students', [CourseController::class, 'students']);
+        Route::get('/{id}/students', [CourseController::class, 'students']);
     });
-
-    // Certificates
-    // Route::prefix('certificates')->group(function () {
-    //     Route::post('/issue', [CertificateController::class, 'issue']); // move logic from StudentController here
-    //     // Route::get('/{certificate}/pdf', [CertificateController::class, 'pdf']);
-    // });
 });
