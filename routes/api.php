@@ -20,7 +20,7 @@ use App\Http\Controllers\Api\StudentLoginController;
 // Admin login
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 
-// Student login (returns full student info)
+// Student login
 Route::post('/student/login', [StudentLoginController::class, 'login']);
 
 // -------------------- PROTECTED ROUTES --------------------
@@ -29,25 +29,28 @@ Route::middleware('auth:sanctum')->group(function () {
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // -------------------- STUDENT PORTAL ROUTES --------------------
+    // -------------------- ADMIN ROUTES --------------------
 
-    // Get current authenticated student with course info
-    Route::get('/student/me', function (Request $request) {
-        $student = $request->user()->load('course'); // eager load course relationship
-        return response()->json(['data' => $student]);
+    // Users (Admins)
+    Route::prefix('users')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('users.index');
+        Route::get('/{id}', [UserController::class, 'show'])->name('users.show');
+        Route::post('/', [UserController::class, 'store'])->name('users.store'); // Add admin
+        Route::put('/{id}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/{id}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 
-    // Download certificate
-    Route::get('/student/certificate/download', [StudentController::class, 'downloadCertificate']);
-
-    // -------------------- ADMIN ROUTES --------------------
+    // -------------------- LOGGED-IN USER PROFILE --------------------
+    Route::get('/me', [UserController::class, 'me'])->name('users.me');         // GET profile
+    Route::put('/me', [UserController::class, 'updateMe'])->name('users.updateMe'); // PUT update profile
 
     // Students
     Route::prefix('students')->group(function () {
         Route::get('/', [StudentController::class, 'index'])->name('students.index');
         Route::get('/export', [StudentController::class, 'export'])->name('students.export');
+        Route::post('/import', [StudentController::class, 'import']);
         Route::get('/{id}', [StudentController::class, 'show'])->name('students.show');
-        Route::post('/', [StudentController::class, 'store'])->name('students.store');
+        Route::post('/create', [StudentController::class, 'store'])->name('students.store');
         Route::put('/{id}', [StudentController::class, 'update'])->name('students.update');
         Route::delete('/{id}', [StudentController::class, 'destroy'])->name('students.destroy');
         Route::post('/{id}/complete-course', [StudentController::class, 'completeCourse']);

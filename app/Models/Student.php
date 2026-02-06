@@ -19,18 +19,18 @@ class Student extends Model
     protected $fillable = [
         'code',
         'name',
-        'password',
+        // 'password',
         'email',
         'phone',
-        'password',
+     'password',
         'status',
         'user_id',
         'course_id',
         'branch_id',
-        'course_start_at',
-        'course_end_at',
-        'certificate_issued_at',
-        'certificate_path',
+        // 'course_start_at',
+        // 'course_end_at',
+        // 'certificate_issued_at',
+        // 'certificate_path',
     ];
 
     /**

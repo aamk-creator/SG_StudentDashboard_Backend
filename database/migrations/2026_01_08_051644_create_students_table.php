@@ -24,8 +24,8 @@ return new class extends Migration
             $table->foreignId('branch_id')->constrained()->onDelete('cascade');
             $table->dateTime('course_start_at')->nullable();
             $table->dateTime('course_end_at')->nullable();
-            $table->dateTime('certificate_issued_at')->nullable();
-            $table->string('certificate_path')->nullable();
+            // $table->dateTime('certificate_issued_at')->nullable();
+            // $table->string('certificate_path')->nullable();
             $table->timestamps();
         });
     }

@@ -115,4 +115,42 @@ class UserController extends Controller
             'message' => 'User deleted successfully'
         ]);
     }
+
+    // ======= Logged-in user routes for profile =======
+
+    // Get current logged-in user
+    public function me(Request $request)
+    {
+        return response()->json([
+            'status' => true,
+            'data' => $request->user(),
+        ]);
+    }
+
+    // Update current logged-in user
+    public function updateMe(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:6',
+        ]);
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Profile updated successfully',
+            'data' => $user
+        ]);
+    }
 }
